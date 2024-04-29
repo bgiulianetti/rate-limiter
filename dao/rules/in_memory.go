@@ -9,7 +9,6 @@ import (
 	"sync"
 )
 
-// hacer repo de notifications and rules
 type InMemoryRulesContainer struct {
 	rules map[string]*domain.RateLimitRule
 	mutex *sync.Mutex

@@ -11,7 +11,6 @@ type RulesContainer interface {
 
 type RulesService struct {
 	rulesContainer RulesContainer
-	//notificaionClient
 }
 
 func NewRulesService(rulesContainer RulesContainer) *RulesService {

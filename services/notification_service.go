@@ -12,15 +12,14 @@ type NotificationsContainer interface {
 	GetNotificationsByUserAndTypeAndInterval(params domain.GetNotificationParams) ([]*domain.Notification, error)
 }
 
-//struct titulo, mensaje
-// type CommunicationClient struct{
-//  	send(string) error/*aca va un strucvt*/ error
-// }
+type CommunicationClient interface {
+	Send(string) error
+}
 
 type NotificationService struct {
 	notificationsContainer NotificationsContainer
 	rulesContainer         RulesContainer
-	//notificaionClient
+	communicationClient    CommunicationClient
 }
 
 func NewNotificationService(notificationsContainer NotificationsContainer, rulesContainer RulesContainer) *NotificationService {
@@ -30,25 +29,19 @@ func NewNotificationService(notificationsContainer NotificationsContainer, rules
 	}
 }
 
-// type NotificationStorage interface {
-// 	add(userID, notificationType string) //, ttl time.Duration)
-// 	getNotifications(userID, notificationType string, intervalTime time.Duration) []domain.Notification
-// }
-
 func (ns *NotificationService) GetNotificationsByUser(userID string) ([]*domain.Notification, error) {
 	return ns.notificationsContainer.GetNotificationsByUser(userID)
 }
 
 func (ns *NotificationService) SendNotification(notificationParams domain.SendNotificationParams) error {
 
-	//array de reglas
 	rule, err := ns.rulesContainer.GetRuleByType(notificationParams.NotificationType)
 	if err != nil {
 		return errors.ErrGetRateLimitRule
 	}
 
 	if rule == nil {
-		sendEmail(notificationParams.UserID)
+		ns.sendEmail(notificationParams.UserID)
 		return nil
 	}
 
@@ -57,7 +50,7 @@ func (ns *NotificationService) SendNotification(notificationParams domain.SendNo
 		return err
 	}
 
-	sendEmail(notificationParams.UserID)
+	ns.sendEmail(notificationParams.UserID)
 	return nil
 }
 
@@ -84,7 +77,11 @@ func (ns *NotificationService) checkRateLimit(userID string, rule *domain.RateLi
 	return nil
 }
 
-func sendEmail(recipient string) {
-	//get email from, userID
-	fmt.Printf("Email sent to %s\n", recipient)
+func (ns *NotificationService) sendEmail(userID string) {
+	err := ns.communicationClient.Send(userID)
+	if err != nil {
+		fmt.Printf("Error sending email to %s\n", userID)
+		return
+	}
+	fmt.Printf("Email sent to %s\n", userID)
 }
