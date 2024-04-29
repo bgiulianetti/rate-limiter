@@ -19,38 +19,20 @@ type MongoDBContainer struct {
 func NewMongoDBContainer() *MongoDBContainer {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb+srv://bgiulianetti:mongodb@cluster0.0nvl0.mongodb.net/minesweper?retryWrites=true&w=majority"))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("uri-here"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	mongoDBContainer := &MongoDBContainer{
 		Client:     client,
-		DB:         "minesweper",
+		DB:         "rate-limit",
 		Collection: "notifications",
 	}
 	return mongoDBContainer
 }
 
 func (mc *MongoDBContainer) GetRules() (map[string]*domain.RateLimitRule, error) {
-
-	// var rules map[string]*domain.RateLimitRule
-	// collection := mdb.Client.Database(mdb.DB).Collection(mdb.Collection)
-	// ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	// cursor, err := collection.Find(ctx, bson.M{})
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer cursor.Close(ctx)
-	// for cursor.Next(ctx) {
-	// 	var rule *domain.RateLimitRule
-	// 	cursor.Decode(rule)
-	// 	rules[rule.NotificationType] = rule
-	// }
-	// if err := cursor.Err(); err != nil {
-	// 	return nil, err
-	// }
-	// return rules, nil
 	return nil, nil
 }
 

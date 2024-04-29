@@ -25,26 +25,43 @@ type InMemoryContainer struct {
 }
 
 func (ic *InMemoryContainer) GetRules() (map[string]*domain.RateLimitRule, error) {
+	ic.mutex.Lock()
+	defer ic.mutex.Unlock()
+
 	return ic.rules, nil
 }
 
 func (ic *InMemoryContainer) GetRuleByType(notificationType string) (*domain.RateLimitRule, error) {
+	ic.mutex.Lock()
+	defer ic.mutex.Unlock()
+
 	return ic.rules[notificationType], nil
 }
 
 func (ic *InMemoryContainer) GetNotifications() (map[string]map[string]*domain.Notification, error) {
+	ic.mutex.Lock()
+	defer ic.mutex.Unlock()
+
 	return ic.notifications, nil
 }
 
 func (ic *InMemoryContainer) GetNotificationsByType(notificationType string) (map[string]*domain.Notification, error) {
+	ic.mutex.Lock()
+	defer ic.mutex.Unlock()
+
 	return ic.notifications[notificationType], nil
 }
 
 func (ic *InMemoryContainer) GetNotificationByTypeAndUser(notificationType, userID string) (*domain.Notification, error) {
+	ic.mutex.Lock()
+	defer ic.mutex.Unlock()
+
 	return ic.notifications[notificationType][userID], nil
 }
 
 func (ic *InMemoryContainer) IncrementNotificationCount(notificationType, userID string) error {
+	ic.mutex.Lock()
+	defer ic.mutex.Unlock()
 
 	if ic.notifications[notificationType] == nil {
 		ic.notifications[notificationType] = make(map[string]*domain.Notification)
@@ -64,6 +81,9 @@ func (ic *InMemoryContainer) IncrementNotificationCount(notificationType, userID
 }
 
 func (ic *InMemoryContainer) ResetNotificationCount(notificationType, userID string) error {
+	ic.mutex.Lock()
+	defer ic.mutex.Unlock()
+
 	if ic.notifications[notificationType] != nil {
 		notification := ic.notifications[notificationType][userID]
 		if notification != nil {
@@ -76,7 +96,6 @@ func (ic *InMemoryContainer) ResetNotificationCount(notificationType, userID str
 }
 
 func setInitialRules() map[string]*domain.RateLimitRule {
-
 	fileData := utils.LoadFile()
 	var rules []domain.RateLimitRule
 	if err := json.Unmarshal(fileData, &rules); err != nil {

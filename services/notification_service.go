@@ -5,7 +5,6 @@ import (
 	"rate-limiter/dao"
 	"rate-limiter/domain"
 	"rate-limiter/errors"
-	"rate-limiter/utils"
 	"time"
 )
 
@@ -45,46 +44,37 @@ func (ns *NotificationService) GetNotificationsByType(notificationType string) (
 
 func (ns *NotificationService) SendNotification(recipient, notificationType string) error {
 	rule, err := ns.container.GetRuleByType(notificationType)
-	fmt.Println("rule", utils.SerializeObject(rule))
 	if err != nil {
 		return errors.ErrGetRateLimitRule
 	}
 
 	if rule == nil {
-		// no rule for this notification type. send email
 		sendEmail(recipient)
 		return nil
 	}
 
-	// Check if the notification should be rate limited
 	err = ns.checkRateLimit(recipient, rule)
 	if err != nil {
 		return err
 	}
 
-	// If rate limit check passes, send email
 	sendEmail(recipient)
 	return nil
 }
 
 func (ns *NotificationService) checkRateLimit(recipient string, rule *domain.RateLimitRule) error {
 	notification, err := ns.container.GetNotificationByTypeAndUser(rule.NotificationType, recipient)
-	fmt.Println("notification by type and user", utils.SerializeObject(notification))
 	if err != nil {
 		return err
 	}
 
 	if notification == nil {
-		fmt.Println("Create Notification")
 		err := ns.container.IncrementNotificationCount(rule.NotificationType, recipient)
-		fmt.Println("notification was created")
 		if err != nil {
 			return err
 		}
 	} else {
-		fmt.Println("Notification exists")
-		// Check if the time interval has elapsed, if yes, reset the count
-		interval := time.Now().Sub(notification.Timestamp)
+		interval := time.Since(notification.Timestamp)
 		if interval >= rule.TimeInterval.Duration {
 			fmt.Println("interval passed. reset counter")
 			err := ns.container.ResetNotificationCount(rule.NotificationType, recipient)
@@ -92,11 +82,9 @@ func (ns *NotificationService) checkRateLimit(recipient string, rule *domain.Rat
 				return err
 			}
 		} else if notification.Count >= rule.MaxLimit {
-			// If within the time interval and count exceeds max limit, reject notification
 			fmt.Println("within interval. max exceeded")
 			return errors.ErrRateLimitExceeded
 		} else {
-			// Increment the notification count
 			fmt.Println("within interval. increment counter")
 			err := ns.container.IncrementNotificationCount(rule.NotificationType, recipient)
 			if err != nil {
@@ -109,7 +97,5 @@ func (ns *NotificationService) checkRateLimit(recipient string, rule *domain.Rat
 }
 
 func sendEmail(recipient string) {
-	//get recipient email
-	//send email to recipient
 	fmt.Printf("Email sent to %s\n", recipient)
 }

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"rate-limiter/errors"
@@ -17,7 +16,7 @@ func TestNotificationController_Pong(t *testing.T) {
 		expectedResponse string
 	}{
 		{
-			name:             "success sending notification",
+			name:             "success",
 			expectedResponse: `{"message":"Pong from Notifications","status":"success"}`,
 		},
 	}
@@ -73,7 +72,7 @@ func TestNotificationController_SendNotification(t *testing.T) {
 			},
 		},
 		{
-			name:             "successful notification send",
+			name:             "success",
 			userID:           "testUserID",
 			notificationType: "testType",
 			expectedCode:     http.StatusOK,
@@ -115,7 +114,6 @@ func TestNotificationController_SendNotification(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			context, _ := gin.CreateTestContext(recorder)
 
-			// Set up the service mock with custom behavior for this test case
 			serviceMock := &ServiceMock{}
 			tc.serviceMockConfig(serviceMock)
 
@@ -127,8 +125,6 @@ func TestNotificationController_SendNotification(t *testing.T) {
 			context.Set("type", tc.notificationType)
 
 			controller.SendNotification(context)
-
-			fmt.Printf("recorder %v", recorder)
 			assert.Equal(t, tc.expectedCode, recorder.Code)
 			assert.Equal(t, tc.expectedResponse, recorder.Body.String())
 		})
