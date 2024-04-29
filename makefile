@@ -1,6 +1,9 @@
 # Define default target
 all: test run
 
+# DAO_TYPE options:
+# memory
+# redis
 export DAO_TYPE := memory
 
 # Run all tests
@@ -23,6 +26,7 @@ install-deps:
 	go get -u github.com/gin-gonic/gin
 	go install github.com/matryer/moq@latest
 	go get github.com/stretchr/testify
+	go get github.com/redis/go-redis/v9
 
 initialize: install-deps mock test run
 

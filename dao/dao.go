@@ -22,8 +22,8 @@ func NewContainer() Container {
 	switch daoType {
 	case "memory":
 		return NewInMemoryContainer()
-	case "mongoDB":
-		return NewMongoDBContainer()
+	case "redis":
+		return NewRedisContainer()
 	default:
 		fmt.Printf("unknown DAO type: '%s'. Load default in memory\n", daoType)
 		return NewInMemoryContainer()
