@@ -19,8 +19,11 @@ clean:
 	rm -f *.o
 
 mock:
-	moq -out ./controllers/mock_service_test.go -pkg controllers ./services Service
-	moq -out ./services/mock_dao_test.go -pkg services ./dao Container
+	moq -out ./controllers/mock_notifications_service_test.go -pkg controllers ./controllers NotificationsService
+	moq -out ./controllers/mock_rules_service_test.go -pkg controllers ./controllers RulesService
+	moq -out ./services/mock_notifications_container_test.go -pkg services ./services NotificationsContainer
+	moq -out ./services/mock_rules_container_test.go -pkg services ./services RulesContainer
+
 
 install-deps:
 	go get -u github.com/gin-gonic/gin
