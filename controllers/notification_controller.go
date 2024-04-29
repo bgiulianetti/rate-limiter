@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"rate-limiter/errors"
 	"rate-limiter/services"
@@ -64,9 +63,7 @@ func (nc NotificationController) SendNotification(c *gin.Context) {
 	}
 
 	err := nc.NotificationService.SendNotification(userID, notificationType)
-	fmt.Println("error in controller:", err)
 	if err != nil {
-		fmt.Println("enter err != nil")
 		if errors.IsTooManyRequestsError(err) {
 			c.JSON(http.StatusTooManyRequests, &errors.ApiError{Message: "message limit exceeded", ErrorStr: err.Error(), Status: http.StatusTooManyRequests})
 		} else {
