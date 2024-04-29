@@ -68,6 +68,7 @@ func (ns *NotificationService) checkRateLimit(recipient string, rule *domain.Rat
 	}
 
 	if notification == nil {
+		fmt.Println("No previous notification. start counter")
 		err := ns.container.IncrementNotificationCount(rule.NotificationType, recipient)
 		if err != nil {
 			return err
@@ -75,16 +76,16 @@ func (ns *NotificationService) checkRateLimit(recipient string, rule *domain.Rat
 	} else {
 		interval := time.Since(notification.Timestamp)
 		if interval >= rule.TimeInterval.Duration {
-			fmt.Println("interval passed. reset counter")
+			fmt.Println("Interval elapsed. reset counter")
 			err := ns.container.ResetNotificationCount(rule.NotificationType, recipient)
 			if err != nil {
 				return err
 			}
 		} else if notification.Count >= rule.MaxLimit {
-			fmt.Println("within interval. max exceeded")
+			fmt.Println("Within interval. max exceeded")
 			return errors.ErrRateLimitExceeded
 		} else {
-			fmt.Println("within interval. increment counter")
+			fmt.Println("Within interval. increment counter")
 			err := ns.container.IncrementNotificationCount(rule.NotificationType, recipient)
 			if err != nil {
 				return err
