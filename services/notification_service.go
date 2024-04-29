@@ -19,7 +19,6 @@ type CommunicationClient interface {
 type NotificationService struct {
 	notificationsContainer NotificationsContainer
 	rulesContainer         RulesContainer
-	communicationClient    CommunicationClient
 }
 
 func NewNotificationService(notificationsContainer NotificationsContainer, rulesContainer RulesContainer) *NotificationService {
@@ -78,10 +77,5 @@ func (ns *NotificationService) checkRateLimit(userID string, rule *domain.RateLi
 }
 
 func (ns *NotificationService) sendEmail(userID string) {
-	err := ns.communicationClient.Send(userID)
-	if err != nil {
-		fmt.Printf("Error sending email to %s\n", userID)
-		return
-	}
 	fmt.Printf("Email sent to %s\n", userID)
 }
