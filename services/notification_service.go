@@ -38,7 +38,6 @@ func (ns *NotificationService) GetNotifications() (map[string]map[string]*domain
 }
 
 func (ns *NotificationService) GetNotificationsByType(notificationType string) (map[string]*domain.Notification, error) {
-	fmt.Println("i get here")
 	return ns.container.GetNotificationsByType(notificationType)
 }
 

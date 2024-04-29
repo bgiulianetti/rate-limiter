@@ -19,6 +19,7 @@ clean:
 
 mock:
 	moq -out ./controllers/mock_service_test.go -pkg controllers ./services Service
+	moq -out ./services/mock_dao_test.go -pkg services ./dao Container
 
 install-deps:
 	go get -u github.com/gin-gonic/gin
