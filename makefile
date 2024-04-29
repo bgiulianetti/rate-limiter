@@ -1,9 +1,7 @@
 # Define default target
 all: test run
 
-# Set up environment variables for local development
-set-env:
-	export DAO_TYPE=memory
+export DAO_TYPE := memory
 
 # Run all tests
 test:
@@ -26,6 +24,6 @@ install-deps:
 	go install github.com/matryer/moq@latest
 	go get github.com/stretchr/testify
 
-initialize: install-deps mock set-env test run
+initialize: install-deps mock test run
 
-.PHONY: all set-env run clean mock install-deps initialize
+.PHONY: all run clean mock install-deps initialize

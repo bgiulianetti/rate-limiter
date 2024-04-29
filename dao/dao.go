@@ -17,14 +17,19 @@ type Container interface {
 }
 
 func NewContainer() Container {
-	daoType := os.Getenv("DAO_TYPE")
+	daoType := getDAOType()
+	fmt.Printf("Container DAO_TYPE: %s\n", daoType)
 	switch daoType {
 	case "memory":
 		return NewInMemoryContainer()
 	case "mongoDB":
 		return NewMongoDBContainer()
 	default:
-		fmt.Printf("unknown DAO type: %s", daoType)
+		fmt.Printf("unknown DAO type: '%s'. Load default in memory\n", daoType)
 		return NewInMemoryContainer()
 	}
+}
+
+func getDAOType() string {
+	return os.Getenv("DAO_TYPE")
 }
