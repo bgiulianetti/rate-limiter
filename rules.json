@@ -1,0 +1,17 @@
+[
+    {
+        "notificationType": "Status",
+        "maxLimit": 2,
+        "timeInterval": "1m"
+    },
+    {
+        "notificationType": "News",
+        "maxLimit": 1,
+        "timeInterval": "24h"
+    },
+    {
+        "notificationType": "Marketing",
+        "maxLimit": 3,
+        "timeInterval": "1h"
+    }
+]
