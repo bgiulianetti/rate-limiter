@@ -8,13 +8,14 @@ import (
 
 func resolveNotificationController() *controllers.NotificationController {
 
+	rulesContainer := dao.NewRulesContainer()
 	controller := &controllers.NotificationController{
 		NotificationService: services.NewNotificationService(
 			dao.NewNotificationContainer(),
-			dao.NewRulesContainer(),
+			rulesContainer,
 		),
 		RulesService: services.NewRulesService(
-			dao.NewRulesContainer(),
+			rulesContainer,
 		),
 	}
 	return controller

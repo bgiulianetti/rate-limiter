@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-func LoadFile() []byte {
-	fileData, err := os.ReadFile("./rules.json")
+func LoadRulesFile() []byte {
+	fileData, err := os.ReadFile("./dao/rules/rules.json")
 	if err != nil {
 		fmt.Println("error reading from rules.json file::::", err)
 	}

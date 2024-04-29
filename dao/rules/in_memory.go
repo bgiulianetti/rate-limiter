@@ -16,7 +16,6 @@ type InMemoryRulesContainer struct {
 
 func NewInMemoryContainer() *InMemoryRulesContainer {
 	rules := setInitialRules()
-	fmt.Println("setInitialRules")
 	return &InMemoryRulesContainer{
 		rules: rules,
 		mutex: &sync.Mutex{},
@@ -38,10 +37,10 @@ func (ic *InMemoryRulesContainer) GetRuleByType(notificationType string) (*domai
 }
 
 func setInitialRules() map[string]*domain.RateLimitRule {
-	fileData := utils.LoadFile()
+	fileData := utils.LoadRulesFile()
 	var rules []domain.RateLimitRule
 	if err := json.Unmarshal(fileData, &rules); err != nil {
-		fmt.Println("error unarshaling rules.json file:::", err)
+		fmt.Println("error unarshaling rules.json file", err)
 	}
 
 	ruleMap := make(map[string]*domain.RateLimitRule)
