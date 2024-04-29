@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+type Service interface {
+	GetRules() (map[string]*domain.RateLimitRule, error)
+	GetRuleByType(string) (*domain.RateLimitRule, error)
+	GetNotifications() (map[string]map[string]*domain.Notification, error)
+	SendNotification(string, string) error
+}
+
 type NotificationService struct {
 	container dao.Container
 }

@@ -3,27 +3,20 @@ package controllers
 import (
 	"fmt"
 	"net/http"
-	"rate-limiter/domain"
 	"rate-limiter/errors"
+	"rate-limiter/services"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-type NotificationService interface {
-	GetRules() (map[string]*domain.RateLimitRule, error)
-	GetRuleByType(string) (*domain.RateLimitRule, error)
-	GetNotifications() (map[string]map[string]*domain.Notification, error)
-	SendNotification(string, string) error
-}
-
 type NotificationController struct {
-	NotificationService NotificationService
+	NotificationService services.Service
 }
 
 func (nc NotificationController) Pong(c *gin.Context) {
 	c.Set("skip", true)
-	c.JSON(http.StatusOK, "Pong from Notifications")
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Pong from Notifications"})
 }
 
 func (nc NotificationController) GetRules(c *gin.Context) {
@@ -61,11 +54,13 @@ func (nc NotificationController) SendNotification(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
 		c.JSON(http.StatusBadRequest, &errors.ApiError{Message: "userID is mandatory", ErrorStr: "invalid_user_id", Status: http.StatusBadRequest})
+		return
 	}
 
 	notificationType := c.GetString("type")
 	if notificationType == "" {
 		c.JSON(http.StatusBadRequest, &errors.ApiError{Message: "notification type is mandatory", ErrorStr: "invalid_type", Status: http.StatusBadRequest})
+		return
 	}
 
 	err := nc.NotificationService.SendNotification(userID, notificationType)
@@ -78,7 +73,7 @@ func (nc NotificationController) SendNotification(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, &errors.ApiError{Message: "internal server error", ErrorStr: err.Error(), Status: http.StatusInternalServerError})
 		}
 	} else {
-		c.JSON(http.StatusOK, "Notification sent")
+		c.JSON(http.StatusOK, gin.H{"status": "success", "message": "notification sent"})
 	}
 }
 
