@@ -14,7 +14,19 @@ type RateLimitRule struct {
 
 type Notification struct {
 	Timestamp time.Time `json:"timeStamp"`
-	Count     int       `json:"count"`
+	UserID    string
+	Type      string
+}
+
+type SendNotificationParams struct {
+	UserID           string
+	NotificationType string
+}
+
+type GetNotificationParams struct {
+	UserID           string
+	NotificationType string
+	TimeInterval     time.Duration
 }
 
 type Duration struct {

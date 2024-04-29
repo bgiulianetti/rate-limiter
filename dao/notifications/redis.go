@@ -1,4 +1,4 @@
-package dao
+package notifications
 
 import (
 	"rate-limiter/domain"

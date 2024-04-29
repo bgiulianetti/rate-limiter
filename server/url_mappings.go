@@ -14,7 +14,9 @@ func mapUrlsToControllers(router *gin.Engine, notificationController *controller
 	router.GET("/rules/:type",
 		middlewares.AdaptHandler(notificationController.ValidateNotificationType),
 		notificationController.GetRuleByType)
-	router.GET("notifications", notificationController.GetNotifications)
+	router.GET("notifications/users/:user_id",
+		middlewares.AdaptHandler(notificationController.ValidateUserID),
+		notificationController.GetNotificationsByUser)
 	router.POST("notifications/:type/users/:user_id",
 		middlewares.AdaptHandler(notificationController.ValidateNotificationType),
 		middlewares.AdaptHandler(notificationController.ValidateUserID),

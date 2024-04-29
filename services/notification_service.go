@@ -2,100 +2,89 @@ package services
 
 import (
 	"fmt"
-	"rate-limiter/dao"
 	"rate-limiter/domain"
 	"rate-limiter/errors"
-	"time"
 )
 
-type Service interface {
-	GetRules() (map[string]*domain.RateLimitRule, error)
-	GetRuleByType(string) (*domain.RateLimitRule, error)
-	GetNotifications() (map[string]map[string]*domain.Notification, error)
-	SendNotification(string, string) error
+type NotificationsContainer interface {
+	AddNotification(userID, notificationType string) error
+	GetNotificationsByUser(userID string) ([]*domain.Notification, error)
+	GetNotificationsByUserAndTypeAndInterval(params domain.GetNotificationParams) ([]*domain.Notification, error)
 }
+
+//struct titulo, mensaje
+// type CommunicationClient struct{
+//  	send(string) error/*aca va un strucvt*/ error
+// }
 
 type NotificationService struct {
-	container dao.Container
+	notificationsContainer NotificationsContainer
+	rulesContainer         RulesContainer
+	//notificaionClient
 }
 
-func NewService() *NotificationService {
+func NewNotificationService(notificationsContainer NotificationsContainer, rulesContainer RulesContainer) *NotificationService {
 	return &NotificationService{
-		container: dao.NewContainer(),
+		notificationsContainer: notificationsContainer,
+		rulesContainer:         rulesContainer,
 	}
 }
 
-func (ns *NotificationService) GetRules() (map[string]*domain.RateLimitRule, error) {
-	return ns.container.GetRules()
+// type NotificationStorage interface {
+// 	add(userID, notificationType string) //, ttl time.Duration)
+// 	getNotifications(userID, notificationType string, intervalTime time.Duration) []domain.Notification
+// }
+
+func (ns *NotificationService) GetNotificationsByUser(userID string) ([]*domain.Notification, error) {
+	return ns.notificationsContainer.GetNotificationsByUser(userID)
 }
 
-func (ns *NotificationService) GetRuleByType(notificationType string) (*domain.RateLimitRule, error) {
-	return ns.container.GetRuleByType(notificationType)
-}
+func (ns *NotificationService) SendNotification(notificationParams domain.SendNotificationParams) error {
 
-func (ns *NotificationService) GetNotifications() (map[string]map[string]*domain.Notification, error) {
-	return ns.container.GetNotifications()
-}
-
-func (ns *NotificationService) GetNotificationsByType(notificationType string) (map[string]*domain.Notification, error) {
-	return ns.container.GetNotificationsByType(notificationType)
-}
-
-func (ns *NotificationService) SendNotification(recipient, notificationType string) error {
-	rule, err := ns.container.GetRuleByType(notificationType)
+	//array de reglas
+	rule, err := ns.rulesContainer.GetRuleByType(notificationParams.NotificationType)
 	if err != nil {
 		return errors.ErrGetRateLimitRule
 	}
 
 	if rule == nil {
-		sendEmail(recipient)
+		sendEmail(notificationParams.UserID)
 		return nil
 	}
 
-	err = ns.checkRateLimit(recipient, rule)
+	err = ns.checkRateLimit(notificationParams.UserID, rule)
 	if err != nil {
 		return err
 	}
 
-	sendEmail(recipient)
+	sendEmail(notificationParams.UserID)
 	return nil
 }
 
-func (ns *NotificationService) checkRateLimit(recipient string, rule *domain.RateLimitRule) error {
-	notification, err := ns.container.GetNotificationByTypeAndUser(rule.NotificationType, recipient)
+func (ns *NotificationService) checkRateLimit(userID string, rule *domain.RateLimitRule) error {
+	notifications, err := ns.notificationsContainer.GetNotificationsByUserAndTypeAndInterval(domain.GetNotificationParams{
+		UserID:           userID,
+		NotificationType: rule.NotificationType,
+		TimeInterval:     rule.TimeInterval.Duration,
+	})
 	if err != nil {
 		return err
 	}
 
-	if notification == nil {
-		fmt.Println("No previous notification. start counter")
-		err := ns.container.IncrementNotificationCount(rule.NotificationType, recipient)
-		if err != nil {
-			return err
-		}
-	} else {
-		interval := time.Since(notification.Timestamp)
-		if interval >= rule.TimeInterval.Duration {
-			fmt.Println("Interval elapsed. reset counter")
-			err := ns.container.ResetNotificationCount(rule.NotificationType, recipient)
-			if err != nil {
-				return err
-			}
-		} else if notification.Count >= rule.MaxLimit {
-			fmt.Println("Within interval. max exceeded")
-			return errors.ErrRateLimitExceeded
-		} else {
-			fmt.Println("Within interval. increment counter")
-			err := ns.container.IncrementNotificationCount(rule.NotificationType, recipient)
-			if err != nil {
-				return err
-			}
-		}
+	if len(notifications) >= rule.MaxLimit {
+		fmt.Println("Within interval. max exceeded")
+		return errors.ErrRateLimitExceeded
+	}
+
+	err = ns.notificationsContainer.AddNotification(userID, rule.NotificationType)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func sendEmail(recipient string) {
+	//get email from, userID
 	fmt.Printf("Email sent to %s\n", recipient)
 }
