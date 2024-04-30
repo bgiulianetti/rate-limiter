@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"rate-limiter/domain"
+	"strings"
 	"sync"
 	"time"
 )
@@ -19,16 +20,10 @@ func NewInMemoryNotificationsContainer() *InMemoryNotificationsContainer {
 }
 
 func (ic *InMemoryNotificationsContainer) GetNotifications() (map[string][]*domain.Notification, error) {
-	ic.mutex.Lock()
-	defer ic.mutex.Unlock()
-
 	return ic.notifications, nil
 }
 
 func (ic *InMemoryNotificationsContainer) GetNotificationsByUser(params domain.GetNotificationParams) ([]*domain.Notification, error) {
-	ic.mutex.Lock()
-	defer ic.mutex.Unlock()
-
 	notificationsToReturn := []*domain.Notification{}
 	startTime := time.Now().Add(-params.TimeInterval)
 	for _, notification := range ic.notifications[params.UserID] {
@@ -43,7 +38,7 @@ func (ic *InMemoryNotificationsContainer) AddNotification(userID, notificationTy
 	ic.notifications[userID] = append(ic.notifications[userID], &domain.Notification{
 		Timestamp: time.Now(),
 		UserID:    userID,
-		Type:      notificationType,
+		Type:      strings.ToLower(notificationType),
 	})
 	return nil
 }

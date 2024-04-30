@@ -11,6 +11,9 @@ type RateLimitRule struct {
 	MaxLimit         int      `json:"maxLimit"`
 	TimeInterval     Duration `json:"timeInterval"`
 }
+type Duration struct {
+	time.Duration
+}
 
 type Notification struct {
 	Timestamp time.Time `json:"timeStamp"`
@@ -27,10 +30,6 @@ type GetNotificationParams struct {
 	UserID           string
 	NotificationType string
 	TimeInterval     time.Duration
-}
-
-type Duration struct {
-	time.Duration
 }
 
 func (d *Duration) UnmarshalJSON(b []byte) error {

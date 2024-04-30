@@ -14,7 +14,7 @@ type InMemoryRulesContainer struct {
 	mutex *sync.Mutex
 }
 
-func NewInMemoryContainer() *InMemoryRulesContainer {
+func NewInMemoryRulesContainer() *InMemoryRulesContainer {
 	rules := setInitialRules()
 	return &InMemoryRulesContainer{
 		rules: rules,
@@ -45,6 +45,7 @@ func setInitialRules() map[string]*domain.RateLimitRule {
 
 	ruleMap := make(map[string]*domain.RateLimitRule)
 	for _, rule := range rules {
+		rule.NotificationType = strings.ToLower(rule.NotificationType)
 		ruleMap[strings.ToLower(rule.NotificationType)] = &rule
 	}
 	return ruleMap

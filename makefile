@@ -4,7 +4,7 @@ all: test run
 # DAO_TYPE options:
 # memory
 # redis
-export DAO_TYPE := memory
+export NOTIFICATIONS_DAO_TYPE := memory
 
 # Run all tests
 test:

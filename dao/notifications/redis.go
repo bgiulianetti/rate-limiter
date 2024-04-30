@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"rate-limiter/domain"
 	"time"
 
@@ -11,44 +12,43 @@ import (
 
 type RedisContainer struct {
 	Client *redis.Client
-	//DB     string
 }
 
 func NewRedisContainer() *RedisContainer {
-	addr, err := redis.ParseURL("some_uri")
+
+	ctx := context.Background()
+
+	// Credentials harcoded. It is just a sandbox
+	client := redis.NewClient(&redis.Options{
+		Addr:     "redis-15763.c84.us-east-1-2.ec2.redns.redis-cloud.com:15763",
+		Password: "sJyxJIhJBZJK0l9q0MxIbOEwl2CTEExa",
+		DB:       0,
+	})
+
+	pong, err := client.Ping(ctx).Result()
 	if err != nil {
-		panic(err)
+		fmt.Println("Error connecting to Redis:", err)
 	}
-	rdb := redis.NewClient(addr)
+	fmt.Println("Connected to Redis:", pong)
 	return &RedisContainer{
-		Client: rdb,
+		Client: client,
 	}
 }
 
 func (rc *RedisContainer) GetNotifications() (map[string][]*domain.Notification, error) {
 	notificationsJSON, err := rc.Client.Get(context.Background(), "notifications").Result()
 	if err != nil {
-		return nil, err
+		return map[string][]*domain.Notification{}, nil
 	}
 
 	var notifications map[string][]*domain.Notification
 	if err := json.Unmarshal([]byte(notificationsJSON), &notifications); err != nil {
 		return nil, err
 	}
-
 	return notifications, nil
 }
 
-func (rc *RedisContainer) GetNotificationsByUser(userID string) ([]*domain.Notification, error) {
-	notifications, err := rc.GetNotifications()
-	if err != nil {
-		return nil, err
-	}
-
-	return notifications[userID], nil
-}
-
-func (rc *RedisContainer) GetNotificationsByUserAndTypeAndInterval(params domain.GetNotificationParams) ([]*domain.Notification, error) {
+func (rc *RedisContainer) GetNotificationsByUser(params domain.GetNotificationParams) ([]*domain.Notification, error) {
 	notifications, err := rc.GetNotifications()
 	if err != nil {
 		return nil, err
@@ -85,6 +85,5 @@ func (rc *RedisContainer) AddNotification(userID, notificationType string) error
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
