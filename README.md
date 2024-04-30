@@ -25,14 +25,42 @@ Etc. these are just samples, the system might have several rate limit rules!
 - The API is prepared to handle multiple rules by notification type.
 
 ## Local Development Setup
-- To run the API you will have to run this command first: ```make initialize```.<br />
+- To run the API for the first time, you will have to run this command first: ```make initialize```.<br />
 This command will:
   - Install all of the dependencies
   - Create all of the mocks
   - Run all the tests
   - Run the API
+- if it is not the first time, you can run the API with any these commands:
+  - ```make all``` This will run all of the tests and run the API.
+  - ```make run``` This will run the API.
 - The API runs in the port ```5000``` by default, but you can change it [here](https://github.com/bgiulianetti/rate-limiter/blob/main/main.go#L12)
 - The API by default uses in memory storage for Notifications, but you can change it to use Redis [here](https://github.com/bgiulianetti/rate-limiter/blob/main/makefile#L7)
 - The Redis server is up and running, you can run your API locally, configure to use Redis and it will work properly.
+
+## Endpoint
+### Request
+```
+POST /notifications/:type/users/:user
+```
+
+### Responses
+
+OK - Http Status code: 200
+```
+{
+    "message": "notification sent",
+    "status": "success"
+}
+```
+
+Too many requests - Http status code: 429
+```
+{
+    "message": "message limit exceeded",
+    "error": "rate limit exceeded",
+    "status": 429
+}
+```
 
 
