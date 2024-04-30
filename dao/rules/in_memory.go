@@ -55,6 +55,5 @@ func setInitialRules() map[string][]*domain.RateLimitRule {
 			ruleMap[strings.ToLower(rule.NotificationType)] = append(ruleMap[strings.ToLower(rule.NotificationType)], rule)
 		}
 	}
-	fmt.Println("initial rules:", utils.SerializeObject(ruleMap))
 	return ruleMap
 }

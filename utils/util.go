@@ -10,7 +10,7 @@ import (
 func LoadRulesFile() []byte {
 	fileData, err := os.ReadFile("./dao/rules/rules.json")
 	if err != nil {
-		fmt.Println("error reading from rules.json file::::", err)
+		fmt.Println("error reading from rules.json file:", err)
 	}
 	return fileData
 }
