@@ -19,8 +19,7 @@ clean:
 	rm -f *.o
 
 mock:
-	moq -out ./controllers/mock_notifications_service_test.go -pkg controllers ./controllers NotificationsService
-	moq -out ./controllers/mock_rules_service_test.go -pkg controllers ./controllers RulesService
+	moq -out ./controllers/mock_rate_limit_service_test.go -pkg controllers ./controllers RateLimitService
 	moq -out ./services/mock_notifications_container_test.go -pkg services ./services NotificationsContainer
 	moq -out ./services/mock_rules_container_test.go -pkg services ./services RulesContainer
 

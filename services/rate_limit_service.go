@@ -28,9 +28,6 @@ func NewRateLimitService(notificationsContainer NotificationsContainer, rulesSer
 }
 
 func (ns *RateLimitService) SendNotification(params domain.SendNotificationParams) error {
-
-	//rules preguntar
-	//peguntar poer sendEmail
 	rule, err := ns.rulesService.GetRuleByType(params.NotificationType)
 	if err != nil {
 		return errors.ErrGetRateLimitRule
@@ -41,7 +38,6 @@ func (ns *RateLimitService) SendNotification(params domain.SendNotificationParam
 		return nil
 	}
 
-	//for{
 	allow, err := ns.checkRateLimit(params.UserID, rule)
 	if err != nil {
 		return err
@@ -50,7 +46,6 @@ func (ns *RateLimitService) SendNotification(params domain.SendNotificationParam
 	if !allow {
 		return errors.ErrRateLimitExceeded
 	}
-	//}
 
 	err = ns.sendEmail(params.UserID)
 	if err != nil {
@@ -75,7 +70,7 @@ func (ns *RateLimitService) checkRateLimit(userID string, rule *domain.RateLimit
 
 	if len(notifications) >= rule.MaxLimit {
 		fmt.Println("Within interval. max exceeded")
-		return false, errors.ErrRateLimitExceeded
+		return false, nil
 	}
 
 	return true, nil

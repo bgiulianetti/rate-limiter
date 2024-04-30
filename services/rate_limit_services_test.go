@@ -1,198 +1,244 @@
 package services
 
-// var timestamp_test = time.Date(2024, time.April, 28, 17, 0, 0, 0, time.UTC)
-// var userIDTest = "userID_test"
-// var notificationTypeTest = "type_test"
+import (
+	"fmt"
+	"rate-limiter/domain"
+	"rate-limiter/errors"
+	"testing"
+	"time"
 
-// func TestNotificationService_GetNotifications(t *testing.T) {
-// 	testCases := []struct {
-// 		name                         string
-// 		expected                     []*domain.Notification
-// 		expectedErr                  error
-// 		mockedNotificationsContainer *NotificationsContainerMock
-// 		userID                       string
-// 	}{
-// 		{
-// 			name: "internal error",
-// 			mockedNotificationsContainer: &NotificationsContainerMock{
-// 				GetNotificationsByUserFunc: func(userID string) ([]*domain.Notification, error) {
-// 					return nil, fmt.Errorf("internal error")
-// 				},
-// 			},
-// 			expectedErr: fmt.Errorf("internal error"),
+	"github.com/stretchr/testify/assert"
+)
+
+var userIDTest = "userID_test"
+var notificationTypeTest = "type_test"
+
+func TestRateLimitService_SendNotification_ErrorGetRules(t *testing.T) {
+	mockRulesContainer := &RulesContainerMock{
+		GetRuleByTypeFunc: func(s string) (*domain.RateLimitRule, error) {
+			return nil, fmt.Errorf("some error")
+		},
+	}
+
+	rateLimitService := NewRateLimitService(&NotificationsContainerMock{}, NewRulesService(mockRulesContainer))
+	err := rateLimitService.SendNotification(domain.SendNotificationParams{
+		UserID:           "user1",
+		NotificationType: "email",
+	})
+
+	assert.Equal(t, errors.ErrGetRateLimitRule, err)
+}
+
+func TestRateLimitService_SendNotification_Success_RuleNotExists(t *testing.T) {
+	mockNotificationsContainer := &NotificationsContainerMock{
+		AddNotificationFunc: func(userID string, notificationType string) error {
+			return nil
+		},
+		GetNotificationsByUserFunc: func(params domain.GetNotificationParams) ([]*domain.Notification, error) {
+			return []*domain.Notification{}, nil
+		},
+	}
+	mockRulesContainer := &RulesContainerMock{
+		GetRuleByTypeFunc: func(s string) (*domain.RateLimitRule, error) {
+			return nil, nil
+		},
+	}
+
+	rateLimitService := NewRateLimitService(mockNotificationsContainer, NewRulesService(mockRulesContainer))
+	err := rateLimitService.SendNotification(domain.SendNotificationParams{
+		UserID:           "user1",
+		NotificationType: "email",
+	})
+
+	assert.NoError(t, err)
+}
+
+func TestRateLimitService_SendNotification_ErrorGetNotifications(t *testing.T) {
+	mockNotificationsContainer := &NotificationsContainerMock{
+		GetNotificationsByUserFunc: func(params domain.GetNotificationParams) ([]*domain.Notification, error) {
+			return nil, fmt.Errorf("error getting rate limit rule for notification type")
+		},
+	}
+	mockRulesContainer := &RulesContainerMock{
+		GetRuleByTypeFunc: func(s string) (*domain.RateLimitRule, error) {
+			return &domain.RateLimitRule{
+				NotificationType: "news",
+				MaxLimit:         3,
+				TimeInterval:     domain.Duration{Duration: time.Second * 60},
+			}, nil
+		},
+	}
+
+	rateLimitService := NewRateLimitService(mockNotificationsContainer, NewRulesService(mockRulesContainer))
+	err := rateLimitService.SendNotification(domain.SendNotificationParams{
+		UserID:           "user1",
+		NotificationType: "email",
+	})
+
+	expectedError := fmt.Errorf("error getting rate limit rule for notification type")
+	assert.Equal(t, expectedError, err)
+}
+
+func TestRateLimitService_SendNotification_LimitExceeded(t *testing.T) {
+	mockNotificationsContainer := &NotificationsContainerMock{
+		GetNotificationsByUserFunc: func(params domain.GetNotificationParams) ([]*domain.Notification, error) {
+			return []*domain.Notification{
+				{
+					Timestamp: time.Now().Add(-time.Second * 10),
+					UserID:    userIDTest,
+					Type:      notificationTypeTest,
+				},
+				{
+					Timestamp: time.Now().Add(-time.Second * 5),
+					UserID:    userIDTest,
+					Type:      notificationTypeTest,
+				},
+			}, nil
+		},
+	}
+	mockRulesContainer := &RulesContainerMock{
+		GetRuleByTypeFunc: func(s string) (*domain.RateLimitRule, error) {
+			return &domain.RateLimitRule{
+				NotificationType: "news",
+				MaxLimit:         2,
+				TimeInterval:     domain.Duration{Duration: time.Second * 60},
+			}, nil
+		},
+	}
+
+	// Create RateLimitService instance
+	rateLimitService := NewRateLimitService(mockNotificationsContainer, NewRulesService(mockRulesContainer))
+
+	// Test sending notification
+	err := rateLimitService.SendNotification(domain.SendNotificationParams{
+		UserID:           "user1",
+		NotificationType: "email",
+	})
+
+	assert.Equal(t, errors.ErrRateLimitExceeded, err)
+}
+
+func TestRateLimitService_SendNotification_ErrorAddNotification(t *testing.T) {
+	mockNotificationsContainer := &NotificationsContainerMock{
+		AddNotificationFunc: func(userID string, notificationType string) error {
+			return fmt.Errorf("some error")
+		},
+		GetNotificationsByUserFunc: func(params domain.GetNotificationParams) ([]*domain.Notification, error) {
+			return []*domain.Notification{
+				{
+					Timestamp: time.Now().Add(-time.Second * 10),
+					UserID:    userIDTest,
+					Type:      notificationTypeTest,
+				},
+				{
+					Timestamp: time.Now().Add(-time.Second * 5),
+					UserID:    userIDTest,
+					Type:      notificationTypeTest,
+				},
+			}, nil
+		},
+	}
+	mockRulesContainer := &RulesContainerMock{
+		GetRuleByTypeFunc: func(s string) (*domain.RateLimitRule, error) {
+			return &domain.RateLimitRule{
+				NotificationType: "news",
+				MaxLimit:         3,
+				TimeInterval:     domain.Duration{Duration: time.Second * 60},
+			}, nil
+		},
+	}
+
+	// Create RateLimitService instance
+	rateLimitService := NewRateLimitService(mockNotificationsContainer, NewRulesService(mockRulesContainer))
+
+	// Test sending notification
+	err := rateLimitService.SendNotification(domain.SendNotificationParams{
+		UserID:           "user1",
+		NotificationType: "email",
+	})
+
+	assert.NoError(t, err)
+}
+
+func TestRateLimitService_SendNotification_Success_WithinInterval_LimitNotExceeded(t *testing.T) {
+	mockNotificationsContainer := &NotificationsContainerMock{
+		AddNotificationFunc: func(userID string, notificationType string) error {
+			return nil
+		},
+		GetNotificationsByUserFunc: func(params domain.GetNotificationParams) ([]*domain.Notification, error) {
+			return []*domain.Notification{
+				{
+					Timestamp: time.Now().Add(-time.Second * 10),
+					UserID:    userIDTest,
+					Type:      notificationTypeTest,
+				},
+				{
+					Timestamp: time.Now().Add(-time.Second * 5),
+					UserID:    userIDTest,
+					Type:      notificationTypeTest,
+				},
+			}, nil
+		},
+	}
+	mockRulesContainer := &RulesContainerMock{
+		GetRuleByTypeFunc: func(s string) (*domain.RateLimitRule, error) {
+			return &domain.RateLimitRule{
+				NotificationType: "news",
+				MaxLimit:         3,
+				TimeInterval:     domain.Duration{Duration: time.Second * 60},
+			}, nil
+		},
+	}
+
+	rateLimitService := NewRateLimitService(mockNotificationsContainer, NewRulesService(mockRulesContainer))
+	err := rateLimitService.SendNotification(domain.SendNotificationParams{
+		UserID:           "user1",
+		NotificationType: "email",
+	})
+
+	assert.NoError(t, err)
+}
+
+// func TestRateLimitService_SendNotification_Success_IntervalElapsed(t *testing.T) {
+// 	mockNotificationsContainer := &NotificationsContainerMock{
+// 		AddNotificationFunc: func(userID string, notificationType string) error {
+// 			return nil
 // 		},
-// 		{
-// 			name: "success",
-// 			mockedNotificationsContainer: &NotificationsContainerMock{
-// 				GetNotificationsByUserFunc: func(userID string) ([]*domain.Notification, error) {
-// 					return []*domain.Notification{
-// 						{
-// 							Timestamp: timestamp_test,
-// 							UserID:    userIDTest,
-// 							Type:      notificationTypeTest,
-// 						},
-// 					}, nil
-// 				},
-// 			},
-// 			expected: []*domain.Notification{
+// 		GetNotificationsByUserFunc: func(params domain.GetNotificationParams) ([]*domain.Notification, error) {
+// 			return []*domain.Notification{
 // 				{
-// 					Timestamp: timestamp_test,
+// 					Timestamp: time.Now().Add(-time.Second * 10),
 // 					UserID:    userIDTest,
 // 					Type:      notificationTypeTest,
 // 				},
-// 			},
-// 			userID: userIDTest,
+// 				{
+// 					Timestamp: time.Now().Add(-time.Second * 5),
+// 					UserID:    userIDTest,
+// 					Type:      notificationTypeTest,
+// 				},
+// 			}, nil
+// 		},
+// 	}
+// 	mockRulesContainer := &RulesContainerMock{
+// 		GetRuleByTypeFunc: func(s string) (*domain.RateLimitRule, error) {
+// 			return &domain.RateLimitRule{
+// 				NotificationType: "news",
+// 				MaxLimit:         2,
+// 				TimeInterval:     domain.Duration{Duration: time.Second * 10},
+// 			}, nil
 // 		},
 // 	}
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			service := &RateLimitService{notificationsContainer: tc.mockedNotificationsContainer}
-// 			notifications, err := service.GetNotificationsByUser(tc.userID)
-// 			assert.Equal(t, tc.expectedErr, err)
-// 			assert.Equal(t, tc.expected, notifications)
-// 		})
-// 	}
-// }
-
-// // refactor test like c# or java
-// func TestNotificationService_SendNotification(t *testing.T) {
-// 	testCases := []struct {
-// 		name                         string
-// 		expected                     map[string]*domain.RateLimitRule
-// 		expectedErr                  error
-// 		mockedNotificationsContainer *NotificationsContainerMock
-// 		mockedRulesContainer         *RulesContainerMock
-// 	}{
-// 		{
-// 			name: "internal error",
-// 			mockedRulesContainer: &RulesContainerMock{
-// 				GetRuleByTypeFunc: func(ns string) (*domain.RateLimitRule, error) {
-// 					return nil, fmt.Errorf("error getting rate limit rule for notification type")
-// 				},
-// 			},
-// 			expectedErr: fmt.Errorf("error getting rate limit rule for notification type"),
-// 		},
-// 		{
-// 			name: "success without rule limit",
-// 			mockedRulesContainer: &RulesContainerMock{
-// 				GetRuleByTypeFunc: func(ns string) (*domain.RateLimitRule, error) {
-// 					return nil, nil
-// 				},
-// 			},
-// 		},
-// 		{
-// 			name: "error getting notification by user, type and interval",
-// 			mockedRulesContainer: &RulesContainerMock{
-// 				GetRuleByTypeFunc: func(ns string) (*domain.RateLimitRule, error) {
-// 					return &domain.RateLimitRule{
-// 						NotificationType: "example",
-// 						MaxLimit:         10,
-// 						TimeInterval:     domain.Duration{Duration: time.Second * 60},
-// 					}, nil
-// 				},
-// 			},
-// 			mockedNotificationsContainer: &NotificationsContainerMock{
-// 				GetNotificationsByUserAndTypeAndIntervalFunc: func(params domain.GetNotificationParams) ([]*domain.Notification, error) {
-// 					return nil, fmt.Errorf("some error")
-// 				},
-// 			},
-// 			expectedErr: fmt.Errorf("some error"),
-// 		},
-// 		{
-// 			name: "error - max exceeded",
-// 			mockedRulesContainer: &RulesContainerMock{
-// 				GetRuleByTypeFunc: func(ns string) (*domain.RateLimitRule, error) {
-// 					return &domain.RateLimitRule{
-// 						NotificationType: "example",
-// 						MaxLimit:         2,
-// 						TimeInterval:     domain.Duration{Duration: time.Second * 60},
-// 					}, nil
-// 				},
-// 			},
-// 			mockedNotificationsContainer: &NotificationsContainerMock{
-// 				GetNotificationsByUserAndTypeAndIntervalFunc: func(params domain.GetNotificationParams) ([]*domain.Notification, error) {
-// 					return []*domain.Notification{
-// 						{
-// 							Timestamp: timestamp_test,
-// 							UserID:    userIDTest,
-// 							Type:      notificationTypeTest,
-// 						},
-// 						{
-// 							Timestamp: timestamp_test.Add(2 * time.Minute),
-// 							UserID:    userIDTest,
-// 							Type:      notificationTypeTest,
-// 						},
-// 					}, nil
-// 				},
-// 			},
-// 			expectedErr: errors.ErrRateLimitExceeded,
-// 		},
-// 		{
-// 			name: "error registering notification",
-// 			mockedRulesContainer: &RulesContainerMock{
-// 				GetRuleByTypeFunc: func(ns string) (*domain.RateLimitRule, error) {
-// 					return &domain.RateLimitRule{
-// 						NotificationType: "example",
-// 						MaxLimit:         2,
-// 						TimeInterval:     domain.Duration{Duration: time.Second * 60},
-// 					}, nil
-// 				},
-// 			},
-// 			mockedNotificationsContainer: &NotificationsContainerMock{
-// 				GetNotificationsByUserAndTypeAndIntervalFunc: func(params domain.GetNotificationParams) ([]*domain.Notification, error) {
-// 					return []*domain.Notification{
-// 						{
-// 							Timestamp: timestamp_test,
-// 							UserID:    userIDTest,
-// 							Type:      notificationTypeTest,
-// 						},
-// 					}, nil
-// 				},
-// 				AddNotificationFunc: func(userID string, notificationType string) error {
-// 					return fmt.Errorf("some error")
-// 				},
-// 			},
-// 			expectedErr: fmt.Errorf("some error"),
-// 		},
-// 		{
-// 			name: "success",
-// 			mockedRulesContainer: &RulesContainerMock{
-// 				GetRuleByTypeFunc: func(ns string) (*domain.RateLimitRule, error) {
-// 					return &domain.RateLimitRule{
-// 						NotificationType: "example",
-// 						MaxLimit:         2,
-// 						TimeInterval:     domain.Duration{Duration: time.Second * 60},
-// 					}, nil
-// 				},
-// 			},
-// 			mockedNotificationsContainer: &NotificationsContainerMock{
-// 				GetNotificationsByUserAndTypeAndIntervalFunc: func(params domain.GetNotificationParams) ([]*domain.Notification, error) {
-// 					return []*domain.Notification{
-// 						{
-// 							Timestamp: timestamp_test,
-// 							UserID:    userIDTest,
-// 							Type:      notificationTypeTest,
-// 						},
-// 					}, nil
-// 				},
-// 				AddNotificationFunc: func(userID string, notificationType string) error {
-// 					return nil
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			service := NewNotificationService(tc.mockedNotificationsContainer, NewRulesService(tc.mockedRulesContainer))
-// 			err := service.SendNotification(domain.SendNotificationParams{
-// 				UserID:           userIDTest,
-// 				NotificationType: notificationTypeTest,
-// 			})
-// 			//sleep() // tanto tiempo
-// 			//sendNotificartion
-// 			assert.Equal(t, tc.expectedErr, err)
-// 		})
-// 	}
+// 	rateLimitService := NewRateLimitService(mockNotificationsContainer, NewRulesService(mockRulesContainer))
+// 	err := rateLimitService.SendNotification(domain.SendNotificationParams{
+// 		UserID:           "user1",
+// 		NotificationType: "email",
+// 	})
+// 	assert.Equal(t, errors.ErrRateLimitExceeded, err)
+// 	time.Sleep(time.Second * 10)
+// 	err = rateLimitService.SendNotification(domain.SendNotificationParams{
+// 		UserID:           "user1",
+// 		NotificationType: "email",
+// 	})
+// 	assert.Equal(t, nil, err)
 // }
