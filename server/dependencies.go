@@ -7,15 +7,12 @@ import (
 )
 
 func resolveNotificationController() *controllers.NotificationController {
-
-	rulesContainer := dao.NewRulesContainer()
 	controller := &controllers.NotificationController{
-		NotificationService: services.NewNotificationService(
+		RateLimitService: services.NewRateLimitService(
 			dao.NewNotificationContainer(),
-			rulesContainer,
-		),
-		RulesService: services.NewRulesService(
-			rulesContainer,
+			services.NewRulesService(
+				dao.NewRulesContainer(),
+			),
 		),
 	}
 	return controller

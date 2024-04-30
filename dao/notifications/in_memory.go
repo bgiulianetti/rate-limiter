@@ -25,21 +25,14 @@ func (ic *InMemoryNotificationsContainer) GetNotifications() (map[string][]*doma
 	return ic.notifications, nil
 }
 
-func (ic *InMemoryNotificationsContainer) GetNotificationsByUser(userID string) ([]*domain.Notification, error) {
-	ic.mutex.Lock()
-	defer ic.mutex.Unlock()
-
-	return ic.notifications[userID], nil
-}
-
-func (ic *InMemoryNotificationsContainer) GetNotificationsByUserAndTypeAndInterval(params domain.GetNotificationParams) ([]*domain.Notification, error) {
+func (ic *InMemoryNotificationsContainer) GetNotificationsByUser(params domain.GetNotificationParams) ([]*domain.Notification, error) {
 	ic.mutex.Lock()
 	defer ic.mutex.Unlock()
 
 	notificationsToReturn := []*domain.Notification{}
-	timestamp := time.Now().Add(-params.TimeInterval)
+	startTime := time.Now().Add(-params.TimeInterval)
 	for _, notification := range ic.notifications[params.UserID] {
-		if notification.Timestamp.After(timestamp) && notification.Type == params.NotificationType {
+		if notification.Timestamp.After(startTime) && notification.Type == params.NotificationType {
 			notificationsToReturn = append(notificationsToReturn, notification)
 		}
 	}

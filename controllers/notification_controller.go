@@ -9,60 +9,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type NotificationsService interface {
+type RateLimitService interface {
 	SendNotification(domain.SendNotificationParams) error
-	GetNotificationsByUser(userID string) ([]*domain.Notification, error)
 }
-
-type RulesService interface {
-	GetRules() (map[string]*domain.RateLimitRule, error)
-	GetRuleByType(string) (*domain.RateLimitRule, error)
-}
-
 type NotificationController struct {
-	NotificationService NotificationsService
-	RulesService        RulesService
+	RateLimitService RateLimitService
 }
 
 func (nc NotificationController) Pong(c *gin.Context) {
 	c.Set("skip", true)
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Pong from Notifications"})
-}
-
-func (nc NotificationController) GetRules(c *gin.Context) {
-	rules, err := nc.RulesService.GetRules()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, &errors.ApiError{Message: "error getting rules", ErrorStr: err.Error(), Status: http.StatusInternalServerError})
-	}
-	c.JSON(http.StatusOK, rules)
-}
-
-func (nc NotificationController) GetRuleByType(c *gin.Context) {
-	notificationType := c.GetString("type")
-	if notificationType == "" {
-		c.JSON(http.StatusBadRequest, &errors.ApiError{Message: "notification type is mandatory", ErrorStr: "invalid_rule", Status: http.StatusBadRequest})
-	}
-	rule, err := nc.RulesService.GetRuleByType(notificationType)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, &errors.ApiError{Message: "error getting rule by type", ErrorStr: err.Error(), Status: http.StatusInternalServerError})
-	}
-	if rule == nil {
-		c.JSON(http.StatusNotFound, &errors.ApiError{Message: "notification type not found", ErrorStr: "rule_not_found", Status: http.StatusNotFound})
-	}
-	c.JSON(http.StatusOK, rule)
-}
-
-func (nc NotificationController) GetNotificationsByUser(c *gin.Context) {
-	userID := c.GetString("userID")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, &errors.ApiError{Message: "userID is mandatory", ErrorStr: "invalid_user_id", Status: http.StatusBadRequest})
-		return
-	}
-	notifications, err := nc.NotificationService.GetNotificationsByUser(userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, &errors.ApiError{Message: "error getting rule by type", ErrorStr: err.Error(), Status: http.StatusInternalServerError})
-	}
-	c.JSON(http.StatusOK, notifications)
 }
 
 func (nc NotificationController) SendNotification(c *gin.Context) {
@@ -78,7 +34,7 @@ func (nc NotificationController) SendNotification(c *gin.Context) {
 		return
 	}
 
-	err := nc.NotificationService.SendNotification(domain.SendNotificationParams{
+	err := nc.RateLimitService.SendNotification(domain.SendNotificationParams{
 		UserID:           userID,
 		NotificationType: notificationType,
 	})
