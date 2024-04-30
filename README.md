@@ -23,9 +23,13 @@ Etc. these are just samples, the system might have several rate limit rules!
 - The Notifications can be stored in memory or in Redis. To configure this, an environment variable must be set in the [Makefile](https://github.com/bgiulianetti/rate-limiter/blob/main/makefile#L7)
 - Rules can only be stored in memory, but the implementation can easily be adapted to be stored in Redis (or any other database)
 - The API is prepared to handle multiple rules by notification type.
+- If a notification type has no rule, you can send as many notifications as you want.
 
 ## Local Development Setup
-- To run the API for the first time, you will have to run this command first: ```make initialize```.<br />
+- To run the API for the first time, you will have to run this command first:
+  ```
+  make initialize
+  ```
 This command will:
   - Install all of the dependencies
   - Create all of the mocks
