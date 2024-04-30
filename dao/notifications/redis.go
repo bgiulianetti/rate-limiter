@@ -15,7 +15,7 @@ type RedisContainer struct {
 }
 
 func NewRedisContainer() *RedisContainer {
-	addr, err := redis.ParseURL("rediss://default:AVNS_a56Xjf3A6o-lqRZZN9L@rate-limiter-rate-limiter.e.aivencloud.com:14133")
+	addr, err := redis.ParseURL("some_uri")
 	if err != nil {
 		panic(err)
 	}
