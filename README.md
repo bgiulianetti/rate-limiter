@@ -18,15 +18,15 @@ Etc. these are just samples, the system might have several rate limit rules!
 - The Storage is handled in memory and with [Redis](https://redis.io/)
 - Interface mocks are handled with [Moq](https://github.com/matryer/moq)
 ### Business Logic
-- Rules and notifications are handled by two different services, and their persistences as well.
-- Initial rules are obtained from a json file, and they are saved in the  rules memory repository and they are handled by the Rules Service.
+- Rules and notifications are handled by two different services, and their persistence as well.
+- Initial rules are obtained from a json file, and they are saved in the  rules memory repository and handled by the Rules Service.
 - The Notifications can be stored in memory or in Redis. To configure this, an environment variable must be set in the [Makefile](https://github.com/bgiulianetti/rate-limiter/blob/main/makefile#L7)
 - Rules can only be stored in memory, but the implementation can easily be adapted to be stored in Redis (or any other database)
 - The API is prepared to handle multiple rules by notification type.
-- If a notification type has no rule, you can send as many notifications as you want.
+- If a notification type has no rule, it is possible to send as many notifications as desired.
 
 ## Local Development Setup
-- To run the API for the first time, you will have to run this command first:
+- To run the API for the first time, it is mandatory to run this command first:
   ```
   make initialize
   ```
@@ -35,12 +35,12 @@ This command will:
   - Create all of the mocks
   - Run all the tests
   - Run the API
-- if it is not the first time, you can run the API with any these commands:
+- if it is not the first time, it is possible to run the API with any of these commands:
   - ```make all``` This will run all of the tests and run the API.
   - ```make run``` This will run the API.
-- The API runs in the port ```5000``` by default, but you can change it [here](https://github.com/bgiulianetti/rate-limiter/blob/main/main.go#L12)
-- The API by default uses in memory storage for Notifications, but you can change it to use Redis [here](https://github.com/bgiulianetti/rate-limiter/blob/main/makefile#L7)
-- The Redis server is up and running, you can run your API locally, configure to use Redis and it will work properly.
+- The API runs on the port ```5000``` by default, but it can be changed [here](https://github.com/bgiulianetti/rate-limiter/blob/main/main.go#L12)
+- The API by default uses in memory storage for Notifications, but it can be changed to use Redis [here](https://github.com/bgiulianetti/rate-limiter/blob/main/makefile#L7)
+- The Redis server is up and running, the API can run locally, it can be configured to use Redis and it will work properly.
 
 ## Endpoint
 ### Request
@@ -50,7 +50,7 @@ POST /notifications/:type/users/:user
 
 ### Responses
 
-OK - Http Status code: 200
+OK - HTTP Status code: 200
 ```
 {
     "message": "notification sent",
@@ -58,7 +58,7 @@ OK - Http Status code: 200
 }
 ```
 
-Too many requests - Http status code: 429
+Too many requests - HTTP status code: 429
 ```
 {
     "message": "message limit exceeded",
