@@ -5,8 +5,8 @@ import (
 )
 
 type RulesContainer interface {
-	GetRules() (map[string]*domain.RateLimitRule, error)
-	GetRuleByType(string) (*domain.RateLimitRule, error)
+	GetRules() (map[string][]*domain.RateLimitRule, error)
+	GetRuleByType(string) ([]*domain.RateLimitRule, error)
 }
 
 type RulesService struct {
@@ -19,10 +19,10 @@ func NewRulesService(rulesContainer RulesContainer) *RulesService {
 	}
 }
 
-func (rs *RulesService) GetRules() (map[string]*domain.RateLimitRule, error) {
+func (rs *RulesService) GetRules() (map[string][]*domain.RateLimitRule, error) {
 	return rs.rulesContainer.GetRules()
 }
 
-func (rs *RulesService) GetRuleByType(notificationType string) (*domain.RateLimitRule, error) {
+func (rs *RulesService) GetRuleByType(notificationType string) ([]*domain.RateLimitRule, error) {
 	return rs.rulesContainer.GetRuleByType(notificationType)
 }

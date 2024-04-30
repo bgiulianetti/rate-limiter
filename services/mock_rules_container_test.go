@@ -18,10 +18,10 @@ var _ RulesContainer = &RulesContainerMock{}
 //
 //		// make and configure a mocked RulesContainer
 //		mockedRulesContainer := &RulesContainerMock{
-//			GetRuleByTypeFunc: func(s string) (*domain.RateLimitRule, error) {
+//			GetRuleByTypeFunc: func(s string) ([]*domain.RateLimitRule, error) {
 //				panic("mock out the GetRuleByType method")
 //			},
-//			GetRulesFunc: func() (map[string]*domain.RateLimitRule, error) {
+//			GetRulesFunc: func() (map[string][]*domain.RateLimitRule, error) {
 //				panic("mock out the GetRules method")
 //			},
 //		}
@@ -32,10 +32,10 @@ var _ RulesContainer = &RulesContainerMock{}
 //	}
 type RulesContainerMock struct {
 	// GetRuleByTypeFunc mocks the GetRuleByType method.
-	GetRuleByTypeFunc func(s string) (*domain.RateLimitRule, error)
+	GetRuleByTypeFunc func(s string) ([]*domain.RateLimitRule, error)
 
 	// GetRulesFunc mocks the GetRules method.
-	GetRulesFunc func() (map[string]*domain.RateLimitRule, error)
+	GetRulesFunc func() (map[string][]*domain.RateLimitRule, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -53,7 +53,7 @@ type RulesContainerMock struct {
 }
 
 // GetRuleByType calls GetRuleByTypeFunc.
-func (mock *RulesContainerMock) GetRuleByType(s string) (*domain.RateLimitRule, error) {
+func (mock *RulesContainerMock) GetRuleByType(s string) ([]*domain.RateLimitRule, error) {
 	if mock.GetRuleByTypeFunc == nil {
 		panic("RulesContainerMock.GetRuleByTypeFunc: method is nil but RulesContainer.GetRuleByType was just called")
 	}
@@ -85,7 +85,7 @@ func (mock *RulesContainerMock) GetRuleByTypeCalls() []struct {
 }
 
 // GetRules calls GetRulesFunc.
-func (mock *RulesContainerMock) GetRules() (map[string]*domain.RateLimitRule, error) {
+func (mock *RulesContainerMock) GetRules() (map[string][]*domain.RateLimitRule, error) {
 	if mock.GetRulesFunc == nil {
 		panic("RulesContainerMock.GetRulesFunc: method is nil but RulesContainer.GetRules was just called")
 	}

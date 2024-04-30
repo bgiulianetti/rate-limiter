@@ -12,14 +12,14 @@ import (
 func TestNotificationService_GetRules(t *testing.T) {
 	testCases := []struct {
 		name                 string
-		expected             map[string]*domain.RateLimitRule
+		expected             map[string][]*domain.RateLimitRule
 		expectedErr          error
 		mockedRulesContainer *RulesContainerMock
 	}{
 		{
 			name: "internal error",
 			mockedRulesContainer: &RulesContainerMock{
-				GetRulesFunc: func() (map[string]*domain.RateLimitRule, error) {
+				GetRulesFunc: func() (map[string][]*domain.RateLimitRule, error) {
 					return nil, fmt.Errorf("internal error")
 				},
 			},
@@ -28,38 +28,46 @@ func TestNotificationService_GetRules(t *testing.T) {
 		{
 			name: "success",
 			mockedRulesContainer: &RulesContainerMock{
-				GetRulesFunc: func() (map[string]*domain.RateLimitRule, error) {
-					return map[string]*domain.RateLimitRule{
+				GetRulesFunc: func() (map[string][]*domain.RateLimitRule, error) {
+					return map[string][]*domain.RateLimitRule{
 						"rule1": {
-							NotificationType: "type1",
-							MaxLimit:         100,
-							TimeInterval: domain.Duration{
-								Duration: time.Minute,
+							{
+								NotificationType: "type1",
+								MaxLimit:         100,
+								TimeInterval: domain.Duration{
+									Duration: time.Minute,
+								},
 							},
 						},
 						"rule2": {
-							NotificationType: "type2",
-							MaxLimit:         500,
-							TimeInterval: domain.Duration{
-								Duration: time.Hour,
+							{
+								NotificationType: "type2",
+								MaxLimit:         500,
+								TimeInterval: domain.Duration{
+									Duration: time.Hour,
+								},
 							},
 						},
 					}, nil
 				},
 			},
-			expected: map[string]*domain.RateLimitRule{
+			expected: map[string][]*domain.RateLimitRule{
 				"rule1": {
-					NotificationType: "type1",
-					MaxLimit:         100,
-					TimeInterval: domain.Duration{
-						Duration: time.Minute,
+					{
+						NotificationType: "type1",
+						MaxLimit:         100,
+						TimeInterval: domain.Duration{
+							Duration: time.Minute,
+						},
 					},
 				},
 				"rule2": {
-					NotificationType: "type2",
-					MaxLimit:         500,
-					TimeInterval: domain.Duration{
-						Duration: time.Hour,
+					{
+						NotificationType: "type2",
+						MaxLimit:         500,
+						TimeInterval: domain.Duration{
+							Duration: time.Hour,
+						},
 					},
 				},
 			},
@@ -79,7 +87,7 @@ func TestNotificationService_GetRules(t *testing.T) {
 func TestNotificationService_GetRulesByType(t *testing.T) {
 	testCases := []struct {
 		name                 string
-		expected             *domain.RateLimitRule
+		expected             []*domain.RateLimitRule
 		expectedErr          error
 		mockedRulesContainer *RulesContainerMock
 		ruleType             string
@@ -87,7 +95,7 @@ func TestNotificationService_GetRulesByType(t *testing.T) {
 		{
 			name: "internal error",
 			mockedRulesContainer: &RulesContainerMock{
-				GetRuleByTypeFunc: func(rt string) (*domain.RateLimitRule, error) {
+				GetRuleByTypeFunc: func(rt string) ([]*domain.RateLimitRule, error) {
 					return nil, fmt.Errorf("internal error")
 				},
 			},
@@ -96,21 +104,25 @@ func TestNotificationService_GetRulesByType(t *testing.T) {
 		{
 			name: "success",
 			mockedRulesContainer: &RulesContainerMock{
-				GetRuleByTypeFunc: func(rt string) (*domain.RateLimitRule, error) {
-					return &domain.RateLimitRule{
-						NotificationType: "type1",
-						MaxLimit:         100,
-						TimeInterval: domain.Duration{
-							Duration: time.Minute,
+				GetRuleByTypeFunc: func(rt string) ([]*domain.RateLimitRule, error) {
+					return []*domain.RateLimitRule{
+						{
+							NotificationType: "type1",
+							MaxLimit:         100,
+							TimeInterval: domain.Duration{
+								Duration: time.Minute,
+							},
 						},
 					}, nil
 				},
 			},
-			expected: &domain.RateLimitRule{
-				NotificationType: "type1",
-				MaxLimit:         100,
-				TimeInterval: domain.Duration{
-					Duration: time.Minute,
+			expected: []*domain.RateLimitRule{
+				{
+					NotificationType: "type1",
+					MaxLimit:         100,
+					TimeInterval: domain.Duration{
+						Duration: time.Minute,
+					},
 				},
 			},
 		},

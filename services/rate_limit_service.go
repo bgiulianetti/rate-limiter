@@ -28,23 +28,24 @@ func NewRateLimitService(notificationsContainer NotificationsContainer, rulesSer
 }
 
 func (ns *RateLimitService) SendNotification(params domain.SendNotificationParams) error {
-	rule, err := ns.rulesService.GetRuleByType(params.NotificationType)
+	rules, err := ns.rulesService.GetRuleByType(params.NotificationType)
 	if err != nil {
 		return errors.ErrGetRateLimitRule
 	}
 
-	if rule == nil {
+	if len(rules) == 0 {
 		ns.sendEmail(params.UserID)
 		return nil
 	}
+	for _, rule := range rules {
+		allow, err := ns.checkRateLimit(params.UserID, rule)
+		if err != nil {
+			return err
+		}
 
-	allow, err := ns.checkRateLimit(params.UserID, rule)
-	if err != nil {
-		return err
-	}
-
-	if !allow {
-		return errors.ErrRateLimitExceeded
+		if !allow {
+			return errors.ErrRateLimitExceeded
+		}
 	}
 
 	err = ns.sendEmail(params.UserID)
